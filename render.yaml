@@ -1,0 +1,52 @@
+databases:
+  - name: cemetery-db
+    plan: free
+    databaseName: cemetery_db
+    user: cemetery_user
+
+services:
+  # --- Backend Django Ninja ---
+  - type: web
+    name: cemetery-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt && python manage.py migrate"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cemetery-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      # Pour un vrai envoi d'email MFA en production, ajouter ici (dans le
+      # dashboard Render, onglet Environment) :
+      #   EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+      #   EMAIL_HOST=smtp.gmail.com
+      #   EMAIL_PORT=587
+      #   EMAIL_USE_TLS=True
+      #   EMAIL_HOST_USER=...
+      #   EMAIL_HOST_PASSWORD=...  (mot de passe d'application Gmail, sans espaces)
+
+  # --- Frontend Flet ---
+  - type: web
+    name: cemetery-frontend
+    runtime: python
+    plan: free
+    rootDir: frontend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python3 main.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: API_BASE_URL
+        # Remplacer par l'URL réelle une fois le backend déployé, ex :
+        # https://cemetery-backend.onrender.com/api
+        value: "https://cemetery-backend.onrender.com/api"

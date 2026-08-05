@@ -1,0 +1,21 @@
+# Environnements virtuels
+venv/
+env/
+.venv/
+
+# Secrets — NE JAMAIS committer (contient le mot de passe Gmail, etc.)
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Django
+*.log
+db.sqlite3
+
+# OS / éditeurs
+.DS_Store
+.vscode/
+.idea/
