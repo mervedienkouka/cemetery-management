@@ -30,6 +30,7 @@ from apps.users.models import User
 
 from apps.audit.models import AuditLog
 
+from api.email_service import send_transactional_email, EmailSendError
 from api.documents import generate_invoice_pdf, generate_exhumation_pv_pdf
 from api.notifications import (
     notify_admins_new_reservation,
@@ -123,21 +124,20 @@ def generate_and_send_mfa_code(user):
     user.save(update_fields=["mfa_code_hash", "mfa_code_expires_at"])
 
     try:
-        send_mail(
+        send_transactional_email(
+            to_email=user.email,
             subject="Votre code de vérification",
-            message=(
+            text_content=(
                 f"Votre code de connexion est : {code}\n"
                 f"Il expire dans {MFA_CODE_EXPIRE_MINUTES} minutes."
             ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
+            to_name=user.username,
         )
-    except Exception as e:
+    except EmailSendError as e:
         raise HttpError(
             502,
             "Impossible d'envoyer l'email de vérification. Vérifie la configuration "
-            f"SMTP dans .env (EMAIL_HOST_USER/EMAIL_HOST_PASSWORD). Détail technique : {e}",
+            f"Brevo (BREVO_API_KEY/BREVO_SENDER_EMAIL). Détail technique : {e}",
         )
 
 
